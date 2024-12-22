@@ -1,101 +1,249 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Court from "@/component/Court";
+import ScoreButtons from "@/component/ScoreButtons";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  // State to track scores, player names, and serve
+  const [team1, setTeam1] = useState({ name: "", score: 0 });
+  const [team2, setTeam2] = useState({ name: "", score: 0 });
+  const [matchType, setMatchType] = useState(""); // No default selection
+  const [selectedPlayers, setSelectedPlayers] = useState({ team1A: "", team1B: "", team2A: "", team2B: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTeam1Serving, setIsTeam1Serving] = useState(true); // Track serving side
+  const [showPopup, setShowPopup] = useState(false); // Add this state for showPopup
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Predefined list of players
+  const playerList = ["Player A", "Player B", "Player C", "Player D"];
+
+  // Handlers to increment and decrement scores
+  const incrementScore = (team) => {
+    if (team === 1) setTeam1({ ...team1, score: team1.score + 1 });
+    if (team === 2) setTeam2({ ...team2, score: team2.score + 1 });
+  };
+
+  const decrementScore = (team) => {
+    if (team === 1 && team1.score > 0) setTeam1({ ...team1, score: team1.score - 1 });
+    if (team === 2 && team2.score > 0) setTeam2({ ...team2, score: team2.score - 1 });
+  };
+
+  // Open and close the player selection modal
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  // Handle player selection for teams
+  const handlePlayerSelect = (playerKey, player) => {
+    setSelectedPlayers({ ...selectedPlayers, [playerKey]: player });
+  };
+
+  // Change serve side
+  const changeServe = () => {
+    setIsTeam1Serving(!isTeam1Serving);
+  };
+
+  // Confirm player selection and close modal
+  const handleConfirmSelection = () => {
+    setShowPopup(true); // Show the court layout after confirming
+    closeModal();
+  };
+
+  return (
+    <div className="p-6 bg-gray-900 min-h-screen flex flex-col justify-center items-center">
+      <h1 className="text-4xl font-extrabold text-center mb-6 text-white">Badminton Score Keeper</h1>
+
+      {/* Match Type Selection */}
+      <div className="mb-6 text-center w-full max-w-lg text-white">
+        <label className="mr-8 text-lg font-semibold">
+          <input
+            type="radio"
+            value="singles"
+            checked={matchType === "singles"}
+            onChange={() => {
+              setMatchType("singles");
+              openModal();
+            }}
+            className="mr-2"
+          />
+          Singles
+        </label>
+        <label className="text-lg font-semibold">
+          <input
+            type="radio"
+            value="doubles"
+            checked={matchType === "doubles"}
+            onChange={() => {
+              setMatchType("doubles");
+              openModal();
+            }}
+            className="mr-2"
+          />
+          Doubles
+        </label>
+      </div>
+
+      {/* Player Selection Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-[300px]">
+            <h2 className="text-xl font-bold mb-4 text-center">Select Players</h2>
+            <div className="flex flex-col">
+              {matchType === "singles" ? (
+                <>
+                  <div className="mb-4">
+                    <label className="block mb-2">Player A</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team1A", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2">Player B</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team2B", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block mb-2">Team 1 Player A</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team1A", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2">Team 1 Player B</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team1B", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2">Team 2 Player A</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team2A", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2">Team 2 Player B</label>
+                    <select
+                      className="w-full p-2 border-2 rounded-lg"
+                      onChange={(e) => handlePlayerSelect("team2B", e.target.value)}
+                    >
+                      <option value="">Select Player</option>
+                      {playerList.map((player) => (
+                        <option key={player} value={player}>
+                          {player}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between">
+                <button
+                  onClick={closeModal}
+                  className="bg-gray-600 text-white py-2 px-4 rounded-lg"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleConfirmSelection} // Use this to handle confirmation
+                  className="bg-blue-600 text-white py-2 px-4 rounded-lg"
+                  disabled={
+                    !selectedPlayers.team1A ||
+                    (matchType === "doubles" &&
+                      (!selectedPlayers.team1B || !selectedPlayers.team2A || !selectedPlayers.team2B))
+                  }
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      )}
+
+      {/* Court Layout */}
+      <Court
+        matchType={matchType}
+        selectedPlayers={selectedPlayers}
+        isTeam1Serving={isTeam1Serving}
+        changeServe={changeServe}
+        showPopup={showPopup} // Pass showPopup state to the Court component
+      />
+
+      {/* Team 1 and Team 2 Scores */}
+      <div className="flex justify-center gap-6 w-full max-w-5xl mb-6 flex-wrap">
+        {/* Team 1 */}
+        <div className="bg-gray-800 p-6 shadow-xl rounded-xl flex flex-col items-center w-[200px] mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-white">Team 1</h2>
+          <div className="text-white text-xl mb-4">
+            {matchType === "singles"
+              ? selectedPlayers.team1A
+              : `${selectedPlayers.team1A} & ${selectedPlayers.team1B}`}
+          </div>
+          <div className="text-6xl font-bold text-white mb-4">{team1.score}</div>
+          <ScoreButtons
+            incrementScore={() => incrementScore(1)}
+            decrementScore={() => decrementScore(1)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+
+        {/* Team 2 */}
+        <div className="bg-gray-800 p-6 shadow-xl rounded-xl flex flex-col items-center w-[200px] mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-white">Team 2</h2>
+          <div className="text-white text-xl mb-4">
+            {matchType === "singles"
+              ? selectedPlayers.team2B
+              : `${selectedPlayers.team2A} & ${selectedPlayers.team2B}`}
+          </div>
+          <div className="text-6xl font-bold text-white mb-4">{team2.score}</div>
+          <ScoreButtons
+            incrementScore={() => incrementScore(2)}
+            decrementScore={() => decrementScore(2)}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      </div>
     </div>
   );
 }
